@@ -21,8 +21,13 @@ XfreqDist1 = nltk.FreqDist(nltk.ngrams(trainingData, 1))
 XfreqDist2 = nltk.FreqDist(nltk.ngrams(trainingData, 2))
 XfreqDist3 = nltk.FreqDist(nltk.ngrams(trainingData, 3))
 
-
-
+ALPHABET = [chr(num) for num in list(range(97, 123))]
+UNIGRAMS = [(i, ) for i in ALPHABET]
+UNIGRAM_RANGE = [i for i in range(26)]
+BIGRAMS = [(i, j) for j in ALPHABET for i in ALPHABET]
+BIGRAM_RANGE = [i for i in range(26 * 26)]
+TRIGRAMS = [(i, j, k) for k in ALPHABET for j in ALPHABET for i in ALPHABET]
+TRIGRAM_RANGE = [i for i in range(26 * 26 * 26)]
 class Key:
     def __init__(self, alphabet = None):
         plainText = list(range(97, 123))
@@ -40,12 +45,11 @@ class Key:
                           for i in range(26)])
 
         self.fitnessVal = None
-        self.first=True
+        self.vectNgramFitness = np.vectorize(self.ngramFitness)
 
     def get_alphabet(self):
         if self.alphabet != None:
             return self.alphabet
-        
 
         alphabet = ""
         for x in self.encryptKey.values():
@@ -66,12 +70,47 @@ class Key:
 
         return self.fitnessVal
 
-    
-    def setFitness(self,cipherText, weights):
+    def setFitness(self, cipherText, weights):
+        decipheredText = self.decipher(cipherText)
+        a, b, c = weights
+
+        sum1 = 0
+        sum2 = 0
+        sum3 = 0
+
+        if a != 0:
+            yfreqDist1 = nltk.FreqDist(nltk.ngrams(decipheredText, 1))
+            sum1 = np.sum(self.vectNgramFitness(UNIGRAM_RANGE, 1,
+                                                XfreqDist1,
+                                                yfreqDist1
+                                                ))
+
+        if b != 0:
+            yfreqDist2 = nltk.FreqDist(nltk.ngrams(decipheredText, 2))
+            sum2 = np.sum(self.vectNgramFitness( BIGRAM_RANGE,2,
+                                                XfreqDist2,
+                                                yfreqDist2
+                                                ))
+
+        if c != 0:
+            yfreqDist3 = nltk.FreqDist(nltk.ngrams(decipheredText, 3))
+            sum3 = np.sum(self.vectNgramFitness(TRIGRAM_RANGE, 3,
+                                                XfreqDist3,
+                                                yfreqDist3
+                                                ))
+
+        print(sum1,sum2,sum3)
+        weightedSums = max((a*sum1)**2 + (b*sum2)**2 +
+                           (c*sum3)**2, .000000000001)
+        return 1 / (weightedSums)
+
+    def setFitness2(self, cipherText, weights):
         decipheredText = self.decipher(cipherText)
         
-        alphabet = [chr(num) for num in list(range(97, 123))]
-        
+        alphabet = ALPHABET
+        yfreqDist1 = nltk.FreqDist(nltk.ngrams(decipheredText, 1))
+        yfreqDist2 = nltk.FreqDist(nltk.ngrams(decipheredText, 2))
+        yfreqDist3 = nltk.FreqDist(nltk.ngrams(decipheredText, 3))
         
         a,b,c = weights
 
@@ -95,13 +134,17 @@ class Key:
         return 1/ (weightedSums)
 
 
-    def ngramFitness(self, n):
-        if self.yfreqDist == None:
-            self.yfreqDist1 = nltk.FreqDist(nltk.ngrams(decipheredText, 1))
-            self.yfreqDist2 = nltk.FreqDist(nltk.ngrams(decipheredText, 2))
-            self.yfreqDist3 = nltk.FreqDist(nltk.ngrams(decipheredText, 3))
+    def ngramFitness(self,i,n, xfreqDist, yfreqDist):
+        if n==1:
+            ngrams=UNIGRAMS
+        if n == 2:
+            ngrams = BIGRAMS
+        if n == 3:
+            ngrams = TRIGRAMS
 
-        if n == 1:
+        
+        return np.abs(xfreqDist.freq(tuple(ngrams[i])) - yfreqDist.freq(tuple(ngrams[i])))
+
             
 
 
