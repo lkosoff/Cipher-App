@@ -116,5 +116,5 @@ class Cipher:
             slots = ["" for _ in range(len(self.inputText))]
 
             for letter in self.inputText:
+                pass
                 
-        
