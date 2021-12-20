@@ -28,6 +28,7 @@ BIGRAMS = [(i, j) for j in ALPHABET for i in ALPHABET]
 BIGRAM_RANGE = [i for i in range(26 * 26)]
 TRIGRAMS = [(i, j, k) for k in ALPHABET for j in ALPHABET for i in ALPHABET]
 TRIGRAM_RANGE = [i for i in range(26 * 26 * 26)]
+
 class Key:
     def __init__(self, alphabet = None):
         plainText = list(range(97, 123))
@@ -47,26 +48,39 @@ class Key:
         self.fitnessVal = None
         self.vectNgramFitness = np.vectorize(self.ngramFitness)
 
-    def get_alphabet(self):
+    def get_alphabet(self,decrypt=False):
         if self.alphabet != None:
             return self.alphabet
 
         alphabet = ""
+        
         for x in self.encryptKey.values():
             alphabet += chr(x)
 
         return alphabet
 
     def encipher(self, plaintext):
-        return plaintext.translate(self.encryptKey)
+        return plaintext.lower().translate(self.encryptKey)
 
     def decipher(self, plaintext):
-        return plaintext.translate(self.decryptKey)
+        return plaintext.lower().translate(self.decryptKey)
     
 
     def fitness(self, cipherText, weights):
         if self.fitnessVal == None:     
             self.fitnessVal = self.setFitness(cipherText,weights)
+
+        return self.fitnessVal
+
+    def fitness2(self, cipherText, weights):
+        if self.fitnessVal == None:
+            self.fitnessVal = self.setFitness2(cipherText, weights)
+
+        return self.fitnessVal
+    
+    def fitness3(self, cipherText, weights):
+        if self.fitnessVal == None:
+            self.fitnessVal = self.setFitness3(cipherText, weights)
 
         return self.fitnessVal
 
@@ -99,7 +113,7 @@ class Key:
                                                 yfreqDist3
                                                 ))
 
-        print(sum1,sum2,sum3)
+       # print(sum1,sum2,sum3)
         weightedSums = max((a*sum1)**2 + (b*sum2)**2 +
                            (c*sum3)**2, .000000000001)
         return 1 / (weightedSums)
@@ -133,8 +147,33 @@ class Key:
         weightedSums = max((a*sum1)**2 + (b*sum2)**2 + (c*sum3)**2, .000000000001)
         return 1/ (weightedSums)
 
+    def setFitness3(self, cipherText, weights):
+        decipheredText = self.decipher(cipherText)
 
-    def ngramFitness(self,i,n, xfreqDist, yfreqDist):
+        a, b, c = weights
+
+        sum1 = 0
+        sum2 = 0
+        sum3 = 0
+
+        if a != 0:
+            yfreqDist1 = nltk.FreqDist(nltk.ngrams(decipheredText, 1))
+            sum1 = np.sum(np.abs(list((XfreqDist1 -  yfreqDist1).values())))
+
+        if b != 0:
+            yfreqDist2 = nltk.FreqDist(nltk.ngrams(decipheredText, 2))
+            sum2 = np.sum(np.abs(list((XfreqDist2 - yfreqDist2).values())))
+
+        if c != 0:
+            yfreqDist3 = nltk.FreqDist(nltk.ngrams(decipheredText, 3))
+            sum3 = np.sum(np.abs(list((XfreqDist3 - yfreqDist3).values())))
+
+        #print(sum1,sum2,sum3)
+        weightedSums = max((a*sum1) + (b*sum2) +
+                           (c*sum3), .000000000001)
+        return 1 / (weightedSums)
+
+    def ngramFitness(self, i, n, xfreqDist, yfreqDist):
         if n==1:
             ngrams=UNIGRAMS
         if n == 2:
@@ -151,27 +190,27 @@ class Key:
 
 
 class Mono_Decryption:
-    def __init__(self, cipherText, populationSize, totalGenerations, weights, signal):
+    def __init__(self, cipherText, populationSize, maxSwaps, weights, signal):
         self.fitnessList = np.zeros((populationSize,))
         self.cipherText = cipherText
         self.populationSize = populationSize
-        self.totalGenerations = totalGenerations
+
 
         self.keys = [Key() for _ in range(populationSize)]
         self.generation = 0
-        self.maxSwaps = 26
-        self.swapPairs = [(i, j) for i in range(26) for j in range(26)]
+        self.maxSwaps = maxSwaps + 1
+        self.swapPairs = [(i, j) for i in range(26) for j in range(26) if i != j]
         self.weights = weights
         self.signal = signal
         self.decryptionHalt = threading.Event()
         
     
     def getSwaps(self):
-        if self.generation % 300 == 0:
+        if self.generation % 1000 == 0:
             self.maxSwaps-=1
-
-        self.maxSwaps = max(self.maxSwaps,3)
-        numOfSwaps = np.random.randint(0, high=self.maxSwaps)
+            self.maxSwaps = max(self.maxSwaps,2)
+            self.signal.updateSwaps(self.maxSwaps - 1)
+        numOfSwaps = np.random.randint(1, high=self.maxSwaps)
         shuffledSwaps = np.random.permutation(self.swapPairs)
         return shuffledSwaps[:numOfSwaps]
 
@@ -193,10 +232,12 @@ class Mono_Decryption:
         
         if i == keyChange:
             self.signal.show_decryption(self.bestKey.decipher(self.cipherText))
+            print("ALPHA",self.bestKey.get_alphabet())
             self.signal.show_key(self.bestKey.get_alphabet())
 
         self.signal.show_iterations(i, keyChange)
 
+        """
         print("-"*10)
         print("-"*10)
         print(f"Generation:{i}, Max Swaps {self.maxSwaps}")
@@ -207,38 +248,23 @@ class Mono_Decryption:
             print(
                 f"Fitness:{self.bestKey.fitness(self.cipherText,self.weights)}")
         print("-"*10)
+        """
 
-
-    def solve2(self):
-
-        self.bestKey = Key()
-        self.topKeys = []
-        self.bestFitness = self.bestKey.fitness(self.cipherText,self.weights)
-        keyChange = 0
-        while True:
-            for i in range(self.totalGenerations):
-                tmpKey = self.makeTmpKey(self.bestKey)
-                tmpKeyFitness = tmpKey.fitness(self.cipherText,self.weights)
-
-                if self.bestFitness < tmpKeyFitness:
-                    self.bestKey = tmpKey
-                    self.bestFitness = tmpKeyFitness
-                    keyChange = i
-
-                self.showProgess(i,keyChange)
-            
-
-    def runDecryption(self):
-        print("HERE2")
+    
+    def runDecryption(self, customKey):
+        
 
         initialKeys = [Key() for _ in range(self.populationSize)] 
         
+        if customKey != None:
+            initialKeys.append(Key(alphabet=customKey))
+            
         self.topKeys = [(key, key.fitness(self.cipherText,self.weights)) for key in initialKeys]
         self.bestKey = self.topKeys[0][0]
         
         keyChange = 0
         
-        for i in range(self.totalGenerations):
+        for i in range(50000):
             if self.decryptionHalt.isSet():
                 break
 
@@ -256,12 +282,12 @@ class Mono_Decryption:
             #time.sleep(1)
             print("BEST,", self.bestKey.get_alphabet())
             print([(key.get_alphabet(),fit) for key,fit in keyList])
-            
+            print("SWAPS",self.maxSwaps)
             self.showProgess(i, keyChange)
 
     
-    def run(self):
-        self.decryptThread = threading.Thread(target=self.runDecryption, args=(), daemon=True)
+    def run(self, customKey):
+        self.decryptThread = threading.Thread(target=self.runDecryption, args=(customKey,), daemon=True)
         self.decryptThread.start()
             
     

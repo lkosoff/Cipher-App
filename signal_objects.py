@@ -9,31 +9,36 @@ class Signal(QObject):
     """
 
     #The signal that gets sent between classes
-    decryptData = pyqtSignal(str)
-    decryptData2 = pyqtSignal(tuple)
-    decryptData3 = pyqtSignal(str)
+    decryptText = pyqtSignal(str)
+    generationDisplay = pyqtSignal(tuple)
+    keyDisplay = pyqtSignal(str)
+    swapDisplay = pyqtSignal(int)
 
 
-    def __init__(self, display, generation,showKey):
+    def __init__(self, display, generation,showKey,swapVal):
         """
         Takes a function that updates the feed
         """
         super().__init__()
 
-        self.decryptData.connect(display)
-        self.decryptData2.connect(generation)
-        self.decryptData3.connect(showKey)
+        self.decryptText.connect(display)
+        self.generationDisplay.connect(generation)
+        self.keyDisplay.connect(showKey)
+        self.swapDisplay.connect(swapVal)
 
     def show_decryption(self, message):
         """
         This function emits a signal carrying a string
         which will get outputted to the feed
         """
-        self.decryptData.emit(message)
+        self.decryptText.emit(message)
     
     def show_iterations(self, current_i, last_i):
-        self.decryptData2.emit((current_i, last_i))
+        self.generationDisplay.emit((current_i, last_i))
     
     def show_key(self, key_alphabet):
-        self.decryptData3.emit(key_alphabet)
+        self.keyDisplay.emit(key_alphabet)
+
+    def updateSwaps(self, swapNum):
+        self.swapDisplay.emit(swapNum)
 
