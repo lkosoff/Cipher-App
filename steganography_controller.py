@@ -3,14 +3,14 @@ from PyQt6.QtWidgets import QApplication, QLineEdit, QStackedWidget, QWidget, QM
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6 import QtCore, uic
 import os
-from stenography import encodeImage,decodeImage
+from steganography import encodeImage,decodeImage
 
 
-class Stenography_Controller(QWidget):
+class Steganography_Controller(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Stenography')
-        uic.loadUi('ui_files/stenography.ui', self)
+        self.setWindowTitle('Steganography')
+        uic.loadUi('ui_files/steganography.ui', self)
         
         self.decrypt_select_image_button.clicked.connect(
             lambda: self.getImage("decode"))
@@ -76,6 +76,6 @@ class Stenography_Controller(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    widget = Stenography_Controller()
+    widget = Steganography_Controller()
     widget.show()
     sys.exit(app.exec())

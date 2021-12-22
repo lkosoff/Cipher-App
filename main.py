@@ -7,7 +7,7 @@ from keyWidget import KeyWidget
 from cipher_controller import Cipher_Controller
 from ciphers import Cipher
 from mono_decryption_controller import Mono_Decryption_Controller, Key
-from stenography_controller import Stenography_Controller
+from steganography_controller import Steganography_Controller
 from text_steganography_controller import Text_Steganography_Controller
 import string
 
@@ -22,7 +22,7 @@ class MainApp(QMainWindow):
         
         self.mainStack.addWidget(Cipher_Controller())
         self.mainStack.addWidget(Mono_Decryption_Controller())
-        self.mainStack.addWidget(Stenography_Controller())
+        self.mainStack.addWidget(Steganography_Controller())
         self.mainStack.addWidget(Text_Steganography_Controller())
 
 

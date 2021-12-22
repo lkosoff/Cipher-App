@@ -43,7 +43,7 @@ def numToLetter(num):
     return string.ascii_lowercase[num]
 class Cipher:
     def __init__ (self, inputText):
-       self.alphabet = "abcdefghijklmnopqrstuvwxyz "
+       self.alphabet = "abcdefghijklmnopqrstuvwxyz"
        self.inputText = inputText.lower()
        self.outputText = ""
        
