@@ -5,6 +5,7 @@ This side project originally started as three seperate projects: A commandline i
 
 # Ciphers
 The project contains implenetation of several classic ciphers such as Atbash, Vigenere, Railfence, etc.
+![alt text](https://github.com/lkosoff/DCrypto/blob/master/readmeImages/cipher_screenshot.png?raw=true])
 
 # Monoalphabetic Substitution Solver
 
