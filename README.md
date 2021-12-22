@@ -11,6 +11,9 @@ The project contains implenetation of several classic ciphers such as Atbash, Vi
 
 This was a tool that automatically solves monoalphabetic substitution ciphers by minimizing a loss function
 
+![alt text](https://github.com/lkosoff/DCrypto/blob/master/readmeImages/solver_screenshot.png?raw=true)
+
 # Steganography
 
 This is a tool that allows the user to upload an image and encode a message into the pixel values of the image.
+
